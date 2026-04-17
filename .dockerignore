@@ -1,0 +1,13 @@
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv
+.env
+.env.*
+*.sqlite3
+.pytest_cache
+.ruff_cache
+app/transaction_600_new.csv

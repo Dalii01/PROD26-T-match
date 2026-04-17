@@ -1,0 +1,564 @@
+{
+  "info": {
+    "name": "t-match API Scenarios",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Step-by-step scenarios to verify t-match API. Set variables in the environment before running."
+  },
+  "item": [
+    {
+      "name": "00 Health",
+      "item": [
+        {
+          "name": "App Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Users",
+      "item": [
+        {
+          "name": "List Users (limit=2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.length >= 2) {",
+                  "  pm.environment.set('user_id', String(json.data[0].id));",
+                  "  pm.environment.set('target_id', String(json.data[1].id));",
+                  "}",
+                  "pm.test('response ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/users?limit=2"
+          }
+        },
+        {
+          "name": "Get My Profile (users/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/users/me"
+          }
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/users/{{user_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Profiles",
+      "item": [
+        {
+          "name": "Get Profile (POST /profile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_id\": {{user_id}}\n}"
+            },
+            "url": "{{base_url}}/profile"
+          }
+        },
+        {
+          "name": "Get My Profile (profile/me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/profile/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Interactions",
+      "item": [
+        {
+          "name": "Like Target",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{target_id}},\n  \"action\": \"like\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        },
+        {
+          "name": "Like Back (from target)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{target_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{user_id}},\n  \"action\": \"like\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        },
+        {
+          "name": "Skip Target",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{target_id}},\n  \"action\": \"skip\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        },
+        {
+          "name": "Hide Target",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{target_id}},\n  \"action\": \"hide\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        },
+        {
+          "name": "Negative: Invalid Action",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{target_id}},\n  \"action\": \"superlike\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        },
+        {
+          "name": "Negative: Same user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{user_id}},\n  \"action\": \"like\"\n}"
+            },
+            "url": "{{base_url}}/interactions"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Matches",
+      "item": [
+        {
+          "name": "List Matches",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.length >= 1) {",
+                  "  pm.environment.set('match_id', String(json.data[0].id));",
+                  "}",
+                  "pm.test('response ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/matches"
+          }
+        },
+        {
+          "name": "List Unseen Matches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/matches?unseen=true"
+          }
+        },
+        {
+          "name": "Mark Match Seen",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/matches/{{match_id}}/seen"
+          }
+        },
+        {
+          "name": "Close Match",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/matches/{{match_id}}/close"
+          }
+        },
+        {
+          "name": "Negative: Close Match Invalid ID",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/matches/abc/close"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Conversations",
+      "item": [
+        {
+          "name": "Create Conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"match_id\": {{match_id}}\n}"
+            },
+            "url": "{{base_url}}/conversations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.id) {",
+                  "  pm.environment.set('conversation_id', String(json.data.id));",
+                  "}",
+                  "pm.test('response ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Conversations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/conversations"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.data && json.data.length >= 1) {",
+                  "  pm.environment.set('conversation_id', String(json.data[0].id));",
+                  "}",
+                  "pm.test('response ok', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Messages",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/conversations/{{conversation_id}}/messages"
+          }
+        },
+        {
+          "name": "Send Message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Hello!\"\n}"
+            },
+            "url": "{{base_url}}/conversations/{{conversation_id}}/messages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Recommendations",
+      "item": [
+        {
+          "name": "Get Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/recommendations?limit=10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 Rank",
+      "item": [
+        {
+          "name": "Get Rank List",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/rank?limit=50"
+          }
+        },
+        {
+          "name": "Cooldown Demo: Skip Target",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"target_id\": {{target_id}},\n  \"action\": \"skip\"\n}"
+            },
+            "url": "{{base_url}}/interactions",
+            "description": "Creates a skip for the target. Next rank request should not include target_id while cooldown is active."
+          }
+        },
+        {
+          "name": "Cooldown Demo: Rank Should Exclude Target",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "const targetId = Number(pm.environment.get('target_id'));",
+                  "let found = false;",
+                  "if (json && Array.isArray(json.data)) {",
+                  "  found = json.data.some(item => Number(item.user_id) === targetId);",
+                  "}",
+                  "pm.test('target is excluded after skip', function () {",
+                  "  pm.expect(found).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-User-ID",
+                "value": "{{user_id}}",
+                "type": "text"
+              }
+            ],
+            "url": "{{base_url}}/rank?limit=50",
+            "description": "Note: If target wasn't in rank list initially, this check still passes. For a strong demo, ensure user_id and target_id are eligible in rank prior to skipping."
+          }
+        },
+        {
+          "name": "Negative: Rank Without Header",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/rank?limit=50"
+          }
+        }
+      ]
+    }
+  ]
+}

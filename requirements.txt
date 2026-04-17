@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+sqlalchemy
+greenlet
+asyncpg
+psycopg2-binary
+python-dotenv
+pyarrow
+fastparquet
+pytest
+pytest-asyncio
+httpx
+prometheus-client

@@ -1,0 +1,206 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: tmatch-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tmatch
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d tmatch"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tmatch-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_URL: postgresql+asyncpg://postgres:postgres@db:5432/tmatch
+      REDIS_URL: redis://redis:6379/0
+      LLM_URL: http://llm:8080
+      LLM_ENABLED: "true"
+      LLM_TIMEOUT: "3.0"
+      PYTHONPATH: /app
+    ports:
+      - "80:8000"
+    volumes:
+      # ML-артефакты: обучаются офлайн, монтируются с хоста.
+      # Перед первым запуском выполните:
+      #   python scripts/build_features.py
+      #   python scripts/train_pca_kmeans.py
+      # После запуска контейнера (один раз):
+      #   docker compose exec app python /app/scripts/seed_clusters.py
+      - ./data:/app/data
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  ml:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tmatch-ml
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: postgresql+asyncpg://postgres:postgres@db:5432/tmatch
+      PYTHONPATH: /app
+    command: ["uvicorn", "app.ml_main:app", "--host", "0.0.0.0", "--port", "8001"]
+    expose:
+      - "8001"
+    volumes:
+      # ML-артефакты: pkl-модели из git, user_clusters.parquet создаётся seed_clusters.py
+      - ./data:/app/data
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  llm:
+    image: ghcr.io/abetlen/llama-cpp-python:latest-cuda
+    container_name: tmatch-llm
+    restart: unless-stopped
+    profiles:
+      - gpu
+    environment:
+      MODEL: /models/llm/qwen2.5-3b-instruct-q8_0.gguf
+      N_GPU_LAYERS: -1
+      HOST: 0.0.0.0
+      PORT: 8080
+      CHAT_FORMAT: chatml
+    volumes:
+      - ./models:/models
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  redis:
+    image: redis:7-alpine
+    container_name: tmatch-redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  admin_frontend:
+    build:
+      context: ./admin-frontend
+      dockerfile: Dockerfile
+    container_name: tmatch-admin-frontend
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "8000:80"
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: tmatch-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "8001:9090"
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: tmatch-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./observability/loki-config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "8002:3100"
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: tmatch-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./observability/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: tmatch-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+    ports:
+      - "443:3000"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.13.0
+    container_name: tmatch-mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    volumes:
+      - mlflow_data:/mlflow
+    ports:
+      - "8003:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  db_data:
+  loki_data:
+  mlflow_data:

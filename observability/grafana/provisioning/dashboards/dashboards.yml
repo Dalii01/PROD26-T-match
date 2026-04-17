@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "tmatch"
+    orgId: 1
+    folder: "t-match"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

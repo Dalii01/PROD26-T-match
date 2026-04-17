@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T‑Match Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">TM</span>
+          <div>
+            <div class="brand-title">T‑Match Admin</div>
+            <div class="brand-subtitle">Safety Console</div>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost" id="btn-refresh">Обновить</button>
+          <button class="btn outline" id="btn-logout">Сменить ID</button>
+        </div>
+      </header>
+
+      <section class="summary">
+        <div class="summary-card">
+          <div class="summary-title">Открытые репорты</div>
+          <div class="summary-value" id="summary-count">—</div>
+          <div class="summary-note" id="summary-note">Последнее обновление: —</div>
+        </div>
+        <div class="summary-card alt">
+          <div class="summary-title">Активный пользователь</div>
+          <div class="summary-value" id="summary-user">—</div>
+          <div class="summary-note" id="summary-user-note">
+            Выберите репорт для деталей
+          </div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Репорты</h2>
+            <div class="panel-header-meta" id="reports-meta">—</div>
+          </div>
+          <div id="reports-list" class="list">
+            <div class="empty">Пока нет репортов.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Профиль пользователя</h2>
+            <div class="panel-header-meta" id="user-meta">—</div>
+          </div>
+          <div id="user-card" class="user-card">
+            <div class="empty">Выберите репорт, чтобы увидеть детали.</div>
+          </div>
+        </div>
+
+        <div class="panel panel-wide">
+          <div class="panel-header">
+            <h2>Аудит пользователя</h2>
+            <div class="toggle">
+              <button class="chip active" data-audit-filter="target">Target</button>
+              <button class="chip" data-audit-filter="actor">Actor</button>
+            </div>
+          </div>
+          <div id="audit-list" class="audit-list">
+            <div class="empty">Нет данных аудита.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="modal" id="login-modal">
+      <div class="modal-card">
+        <h2>Вход администратора</h2>
+        <p class="muted">
+          Укажите ID администратора (X-User-ID). Пока без пароля.
+        </p>
+        <input
+          id="admin-id-input"
+          type="number"
+          min="1"
+          placeholder="Admin ID"
+        />
+        <button class="btn primary" id="btn-login">Войти</button>
+        <div class="login-error" id="login-error"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

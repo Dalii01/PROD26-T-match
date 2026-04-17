@@ -1,0 +1,80 @@
+{
+  "id": null,
+  "uid": "tmatch-observability",
+  "title": "t-match Observability",
+  "tags": ["t-match"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP Requests Total",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (path, status) (rate(http_requests_total[5m]))",
+          "legendFormat": "{{path}} {{status}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request Duration p95",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, path) (rate(http_request_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{path}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP 5xx Rate",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP 4xx Rate",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total{status=~\"4..\"}[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total RPS",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 6 },
+      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[5m]))"
+        }
+      ]
+    },
+    {
+      "type": "logs",
+      "title": "Container Logs (Loki)",
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 10 },
+      "datasource": { "type": "loki", "uid": "Loki" },
+      "targets": [
+        {
+          "expr": "{job=~\"tmatch-.*|tmatch_app|tmatch-ml|tmatch-app|tmatch-ml\"}"
+        }
+      ]
+    }
+  ]
+}

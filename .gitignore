@@ -1,0 +1,78 @@
+# Environment
+.env
+.venv
+.venv*
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv-poetry312
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+*.egg-info/
+dist/
+build/
+
+# Сырые данные (33ГБ, только локально)
+data/
+
+# user_clusters.parquet генерируется на сервере через seed_clusters.py
+# Локальная версия (обученная на 33ГБ) не нужна в репозитории
+models/user_clusters.parquet
+
+# LLM-веса (GGUF ~3 ГБ) — скачиваются на сервер вручную, не в git
+models/llm/
+
+# models/*.pkl — веса модели — КОММИТЯТСЯ в git для деплоя
+# (не исключаем models/ целиком, не исключаем *.pkl глобально)
+
+# Внутренняя документация (не для репозитория)
+ML_PIPELINE.md
+
+# Артефакты IDE и OS
+*.sqlite
+*.db
+
+# IDE
+*.iml
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Large transaction files
+app/transaction_600_new.csv
+
+# ML outputs
+mlruns/
+notebooks/figures/
+cats_out.txt
